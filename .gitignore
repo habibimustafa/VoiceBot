@@ -1,0 +1,10 @@
+node_modules/
+dist/
+temp/
+.idea/
+coverage
+.env
+npm-debug.log
+debug.log
+.idea/
+dist/
