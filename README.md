@@ -1,7 +1,7 @@
 # VoiceBot
 Simple Voice Bot using IBM Watson Service
 
-## USE
+## How to Use
 - Modify your credentials on ``config.js``
 - Clone this project
 - Deploy to Bluemix
