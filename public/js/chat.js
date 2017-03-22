@@ -9,8 +9,8 @@ function createUserMessage(payload) {
   var userImg = document.createElement('img');
   userImg.setAttribute('class','img-circle');
   userImg.setAttribute('alt','User Avatar')
-  if(!msgPos) userImg.setAttribute('src','http://placehold.it/100/f00/fff.jpg?text=C');
-  else userImg.setAttribute('src','http://placehold.it/100/00f/fff.jpg?text=S');
+  if(!msgPos) userImg.setAttribute('src','img/client.jpg');
+  else userImg.setAttribute('src','img/system.jpg');
 
   var chatImg = document.createElement('span');
   if(!msgPos) chatImg.setAttribute('class','chat-img pull-left');
@@ -23,6 +23,7 @@ function createUserMessage(payload) {
     msgAudio.setAttribute('controls', true);
     msgAudio.setAttribute('autoplay', true);
     msgAudio.setAttribute('src', msgText);
+    msgAudio.setAttribute('type', 'audio/ogg;codecs=opus');
     msgTxt.appendChild(msgAudio);
   } else {
     var message = document.createTextNode(msgText);
@@ -57,17 +58,27 @@ var socket = io('/');
 socket.on('connect', function () {
   socket.on('replymsg', function (msg) {
     if(msg.type=='audio'){
-      textMessage = msg.message;
-      msg.message = msg.url;
-      createUserMessage(msg);
-      var elm     = document.querySelector('#msg'+msg.ts+' .chat-body p');
-      var msgBox  = document.createElement('p');
-      msgBox.innerHTML = "<i>"+textMessage+"</i>";
-      elm.parentNode.insertBefore(msgBox, elm.nextSibling);
+      var reqURL  = '/synthesize?download=true&text='+msg.message;
+      fetch(reqURL).then((response) => {
+        if (response.ok) {
+          response.blob().then((blob) => {
+            const audioURL = window.URL.createObjectURL(blob);
+            txtMessage  = msg.message;
+            msg.message = audioURL;
+            createUserMessage(msg);
+            var elm     = document.querySelector('#msg'+msg.ts+' .chat-body p');
+            var msgBox  = document.createElement('p');
+            msgBox.innerHTML = "<i>"+txtMessage+"</i>";
+            elm.parentNode.insertBefore(msgBox, elm.nextSibling);
+          });
+        } else {
+          console.log(response);
+        }
+      })
     } else createUserMessage(msg);
   });
 
-  socket.on('audiomsg', function (msg) {
+  socket.on('transcript', function (msg) {
     var elm     = document.querySelector('#msg'+msg.ts+' .chat-body p');
     var msgBox  = document.createElement('p');
     msgBox.innerHTML = "<i>"+msg.message+"</i>";
@@ -75,13 +86,14 @@ socket.on('connect', function () {
     msg.type = "audio";
     socket.emit('sendmsg', msg);
   });
+
 });
 
 function sendAudioMessage(blob, timestamp){
   var file   = blob;
   var stream = ss.createStream();
   // upload a file to the server.
-  ss(socket).emit('audio', stream, {ts: timestamp});
+  ss(socket).emit('recognize', stream, {ts: timestamp});
   ss.createBlobReadStream(file).pipe(stream);
 }
 

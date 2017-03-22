@@ -1,7 +1,7 @@
-var config  = require('./config');
-var fs      = require('fs');
-var watson  = require('watson-developer-cloud');
-var blobStream = require('blob-stream');
+var config      = require('./config');
+var fs          = require('fs');
+var watson      = require('watson-developer-cloud');
+var blobStream  = require('blob-stream');
 
 var conversation = watson.conversation({
   username: config.conversation_username,
@@ -31,7 +31,7 @@ var watson = {
     }, callback);
   },
 
-  speech: function(stream, err, data) {
+  recognize: function(stream, err, data) {
     var params = {
       content_type: 'audio/l16; rate=44100; channels=2',
       model: 'en-US_BroadbandModel'  // Specify your language model here
@@ -44,22 +44,12 @@ var watson = {
     textStream.on('data', data);
   },
 
-  text: function(message, filename, onFinish) {
+  synthesize: function(message){
     var params = {
       text: message,
-      voice: 'en-US_AllisonVoice',
-      accept: 'audio/wav'
+      voice: 'en-US_AllisonVoice'
     };
-
-    // Pipe the synthesized text to a file.
-    // text_to_speech.synthesize(params, callback);
-    text_to_speech.synthesize(params)
-    .on('error', function(error) {
-      console.log('Error:', error);
-    })
-    .pipe(fs.createWriteStream('./audio/'+filename))
-    .on('finish', onFinish);
-    // }).pipe(blobStream).on('finish', onFinish);
+    return text_to_speech.synthesize(params);
   }
 
 }
